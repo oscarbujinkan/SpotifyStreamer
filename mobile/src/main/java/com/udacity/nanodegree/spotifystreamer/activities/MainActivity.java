@@ -1,8 +1,9 @@
 package com.udacity.nanodegree.spotifystreamer.activities;
 
+import android.os.Bundle;
 import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
+import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -14,14 +15,26 @@ import android.widget.EditText;
 import android.widget.TextView;
 
 import com.udacity.nanodegree.spotifystreamer.R;
+import com.udacity.nanodegree.spotifystreamer.adapters.ArtistsResultAdapter;
+import com.udacity.nanodegree.spotifystreamer.data.SearchSpotifyDownload;
+import com.udacity.nanodegree.spotifystreamer.interfaces.ArtistResultAdapterCallback;
+import com.udacity.nanodegree.spotifystreamer.interfaces.SearchSpotifyCallback;
 
-public class MainActivity extends AppCompatActivity {
+import kaaes.spotify.webapi.android.models.Artist;
+import kaaes.spotify.webapi.android.models.ArtistsPager;
+import kaaes.spotify.webapi.android.models.Tracks;
+
+public class MainActivity extends AppCompatActivity implements SearchSpotifyCallback, ArtistResultAdapterCallback{
 
     private RecyclerView mRecyclerView;
     private EditText mSearchBox;
     private static final long TIME_TO_SEARCH=1000;
+    private static final int MIN_SEARCH_TEXT_SIZE=3;
     private boolean isSearching=false;
     private Handler mHandler=new Handler();
+    private SearchSpotifyDownload mSearchSpotifyDownload;
+    private ArtistsResultAdapter mAdapter;
+
 
     private Runnable mSearchRunnable=new Runnable() {
         @Override
@@ -40,18 +53,22 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public void onTextChanged(CharSequence s, int start, int before, int count) {
-
+            mHandler.removeCallbacks(mSearchRunnable);
         }
 
         @Override
         public void afterTextChanged(Editable s) {
-
+            if(s.length()>MIN_SEARCH_TEXT_SIZE){
+                mHandler.removeCallbacks(mSearchRunnable);
+                mHandler.postDelayed(mSearchRunnable,TIME_TO_SEARCH);
+            }
         }
     };
     private TextView.OnEditorActionListener mSearchBoxEditorListener= new TextView.OnEditorActionListener() {
         @Override
         public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
             if (actionId == EditorInfo.IME_ACTION_SEARCH) {
+                mHandler.removeCallbacks(mSearchRunnable);
                 searchArtist();
                 return true;
             }
@@ -66,10 +83,14 @@ public class MainActivity extends AppCompatActivity {
         mRecyclerView=(RecyclerView) findViewById(R.id.main_result_recyclerview);
         mSearchBox=(EditText) findViewById(R.id.main_result_search_box);
         mSearchBox.addTextChangedListener(mSearchBoxWatcher);
+        mSearchSpotifyDownload=new SearchSpotifyDownload();
+        mRecyclerView.setLayoutManager(new LinearLayoutManager(this));
+
     }
 
     private void searchArtist(){
         isSearching=true;
+        mSearchSpotifyDownload.searchArtist(mSearchBox.getText().toString(),this);
 
     }
 
@@ -93,5 +114,26 @@ public class MainActivity extends AppCompatActivity {
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public void onSuccess(Object object) {
+        if(object instanceof ArtistsPager) {
+            mAdapter = new ArtistsResultAdapter(this, (ArtistsPager) object, this);
+            mRecyclerView.setAdapter(mAdapter);
+            isSearching = false;
+        }else if(object instanceof Tracks){
+
+        }
+    }
+
+    @Override
+    public void onFail() {
+        isSearching=false;
+    }
+
+    @Override
+    public void onItemClick(Artist artist) {
+        mSearchSpotifyDownload.searchTopTenSongs(artist.id,this);
     }
 }

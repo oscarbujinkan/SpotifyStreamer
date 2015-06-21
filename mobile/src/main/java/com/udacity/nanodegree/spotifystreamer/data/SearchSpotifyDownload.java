@@ -2,39 +2,57 @@ package com.udacity.nanodegree.spotifystreamer.data;
 
 import android.os.AsyncTask;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.udacity.nanodegree.spotifystreamer.core.Config;
 import com.udacity.nanodegree.spotifystreamer.interfaces.SearchSpotifyCallback;
-import com.udacity.nanodegree.spotifystreamer.models.SpotifyArtist;
 
-import java.io.IOException;
-import java.net.URL;
+import kaaes.spotify.webapi.android.SpotifyApi;
+import kaaes.spotify.webapi.android.SpotifyService;
+import kaaes.spotify.webapi.android.models.ArtistsPager;
+import kaaes.spotify.webapi.android.models.Tracks;
 
 /**
  * Created by oscarfuentes on 19-06-15.
  */
 public class SearchSpotifyDownload {
 
+    private SpotifyApi mSpotifyApi;
+    private SpotifyService mSpotifyService;
+
+    public SearchSpotifyDownload(){
+        mSpotifyApi=new SpotifyApi();
+        mSpotifyService= mSpotifyApi.getService();
+    }
+
     public void searchArtist(final String query, final SearchSpotifyCallback ssc){
-        new AsyncTask<Void,Void,SpotifyArtist>(){
+        new AsyncTask<Void,Void,ArtistsPager>(){
 
             @Override
-            protected SpotifyArtist doInBackground(Void... params) {
-                ObjectMapper mapper = new ObjectMapper();
-
-                try {
-
-                        SpotifyArtist artist = mapper.readValue(new URL(String.format(Config.SEARCH_ARTIST_URL,query)), SpotifyArtist.class);
-
-                    return artist;
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-                return null;
+            protected ArtistsPager doInBackground(Void... params) {
+                ArtistsPager results = mSpotifyService.searchArtists(query);
+                return results;
             }
 
             @Override
-            protected void onPostExecute(SpotifyArtist artist) {
+            protected void onPostExecute(ArtistsPager artist) {
+                if(artist!=null){
+                    ssc.onSuccess(artist);
+                }else{
+                    ssc.onFail();
+                }
+
+            }
+        }.execute();
+    }
+    public void searchTopTenSongs(final String artistId, final SearchSpotifyCallback ssc){
+        new AsyncTask<Void,Void,Tracks>(){
+
+            @Override
+            protected Tracks doInBackground(Void... params) {
+                Tracks results = mSpotifyService.getArtistTopTrack(artistId);
+                return results;
+            }
+
+            @Override
+            protected void onPostExecute(Tracks artist) {
                 if(artist!=null){
                     ssc.onSuccess(artist);
                 }else{
