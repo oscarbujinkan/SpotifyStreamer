@@ -1,21 +1,10 @@
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main_fragment_content"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
     tools:context=".MainActivity">
 
-    <EditText
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_margin="10dp"
-        android:imeOptions="actionSearch"
-        android:id="@+id/main_result_search_box"
-        android:layout_alignParentTop="true"
-        android:layout_centerHorizontal="true" />
-    <android.support.v7.widget.RecyclerView
-        android:id="@+id/main_result_recyclerview"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:scrollbars="vertical"/>
-</LinearLayout>
+
+</FrameLayout>

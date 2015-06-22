@@ -22,6 +22,7 @@ public class ArtistResultHolder extends RecyclerView.ViewHolder {
         artistImage=(ImageView) itemView.findViewById(R.id.main_result_cover_artist);
         artistName=(TextView) itemView.findViewById(R.id.main_result_artist_text);
         progress=(ProgressBar) itemView.findViewById(R.id.main_result_cover_spinner);
+        itemView.setClickable(true);
 
     }
 }

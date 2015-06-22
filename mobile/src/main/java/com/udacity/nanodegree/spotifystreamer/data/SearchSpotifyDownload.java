@@ -4,6 +4,9 @@ import android.os.AsyncTask;
 
 import com.udacity.nanodegree.spotifystreamer.interfaces.SearchSpotifyCallback;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import kaaes.spotify.webapi.android.SpotifyApi;
 import kaaes.spotify.webapi.android.SpotifyService;
 import kaaes.spotify.webapi.android.models.ArtistsPager;
@@ -47,7 +50,9 @@ public class SearchSpotifyDownload {
 
             @Override
             protected Tracks doInBackground(Void... params) {
-                Tracks results = mSpotifyService.getArtistTopTrack(artistId);
+                HashMap<String, Object> options=new HashMap<String,Object>();
+                options.put("country","SE");
+                Tracks results = mSpotifyService.getArtistTopTrack(artistId,options);
                 return results;
             }
 

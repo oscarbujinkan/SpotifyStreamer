@@ -35,7 +35,7 @@ public class ArtistsResultAdapter extends RecyclerView.Adapter<ArtistResultHolde
     @Override
     public ArtistResultHolder onCreateViewHolder(ViewGroup viewGroup, final int i) {
 
-        View v= LayoutInflater.from(mContext).inflate(R.layout.main_result_item, viewGroup,false);
+        View v= LayoutInflater.from(mContext).inflate(R.layout.artist_result_item, viewGroup,false);
         ArtistResultHolder holder= new ArtistResultHolder(v);
         v.setOnClickListener(new View.OnClickListener() {
             @Override
