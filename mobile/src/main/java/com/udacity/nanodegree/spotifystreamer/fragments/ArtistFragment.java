@@ -18,6 +18,7 @@ import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.udacity.nanodegree.spotifystreamer.R;
 import com.udacity.nanodegree.spotifystreamer.activities.MainActivity;
@@ -25,6 +26,8 @@ import com.udacity.nanodegree.spotifystreamer.adapters.ArtistsResultAdapter;
 import com.udacity.nanodegree.spotifystreamer.data.SearchSpotifyDownload;
 import com.udacity.nanodegree.spotifystreamer.interfaces.ArtistResultAdapterCallback;
 import com.udacity.nanodegree.spotifystreamer.interfaces.SearchSpotifyCallback;
+
+import java.io.Serializable;
 
 import kaaes.spotify.webapi.android.models.Artist;
 import kaaes.spotify.webapi.android.models.ArtistsPager;
@@ -36,12 +39,16 @@ import kaaes.spotify.webapi.android.models.Tracks;
 public class ArtistFragment extends Fragment implements SearchSpotifyCallback, ArtistResultAdapterCallback {
     private RecyclerView mRecyclerView;
     private EditText mSearchBox;
-    private static final long TIME_TO_SEARCH=1000;
+    private static final long TIME_TO_SEARCH=800;
+    private static final String SEARCHING_BOOL="issearching";
+    private static final String ARISTS_RESULT="artists";
     private static final int MIN_SEARCH_TEXT_SIZE=3;
     private boolean isSearching=false;
     private Handler mHandler=new Handler();
     private SearchSpotifyDownload mSearchSpotifyDownload;
     private ArtistsResultAdapter mAdapter;
+    private String mActualArtist;
+    private ArtistsPager mActualArtists;
     public static final String TAG="ArtistFragment";
 
 
@@ -96,6 +103,12 @@ public class ArtistFragment extends Fragment implements SearchSpotifyCallback, A
         mSearchBox.setOnEditorActionListener(mSearchBoxEditorListener);
         mSearchSpotifyDownload=new SearchSpotifyDownload();
         mRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
+        if(savedInstanceState!=null){
+            if(mActualArtist!=null){
+                mAdapter = new ArtistsResultAdapter(getActivity(), mActualArtists, this);
+                mRecyclerView.setAdapter(mAdapter);
+            }
+        }
         return v;
     }
 
@@ -104,6 +117,24 @@ public class ArtistFragment extends Fragment implements SearchSpotifyCallback, A
         mSearchSpotifyDownload.searchArtist(mSearchBox.getText().toString(),this);
 
     }
+
+    public void onActivityCreated(Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
+
+        if (savedInstanceState != null) {
+            ArtistFragment af= (ArtistFragment) getActivity().getSupportFragmentManager().getFragment(savedInstanceState,this.getClass().getName());
+            mActualArtists=af.getActualArtists();
+            isSearching=false;
+
+        }
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        getActivity().getSupportFragmentManager().putFragment(outState,this.getClass().getName(),this);
+    }
+
 
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
@@ -118,9 +149,7 @@ public class ArtistFragment extends Fragment implements SearchSpotifyCallback, A
         int id = item.getItemId();
 
         //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
-        }
+
 
         return super.onOptionsItemSelected(item);
     }
@@ -128,12 +157,18 @@ public class ArtistFragment extends Fragment implements SearchSpotifyCallback, A
     @Override
     public void onSuccess(Object object) {
         if(object instanceof ArtistsPager) {
-            mAdapter = new ArtistsResultAdapter(getActivity(), (ArtistsPager) object, this);
-            mRecyclerView.setAdapter(mAdapter);
+            if(((ArtistsPager) object)!=null&&((ArtistsPager) object).artists!=null&&((ArtistsPager) object).artists.items.size()>0) {
+                mActualArtists=(ArtistsPager) object;
+                mAdapter = new ArtistsResultAdapter(getActivity(), (ArtistsPager) object, this);
+                mRecyclerView.setAdapter(mAdapter);
+            }else{
+                Toast.makeText(getActivity(),R.string.no_artist_found_message,Toast.LENGTH_LONG).show();
+            }
             isSearching = false;
         }else if(object instanceof Tracks){
             TopTracksFragment ttf=new TopTracksFragment();
             ttf.setTracks((Tracks) object);
+            ttf.setArtist(mActualArtist);
             ((MainActivity) getActivity()).addFragmentToStack(ttf, TopTracksFragment.TAG);
         }
     }
@@ -145,7 +180,10 @@ public class ArtistFragment extends Fragment implements SearchSpotifyCallback, A
 
     @Override
     public void onItemClick(Artist artist) {
+        mActualArtist=artist.name;
         mSearchSpotifyDownload.searchTopTenSongs(artist.id,this);
     }
-
+    public ArtistsPager getActualArtists(){
+        return mActualArtists;
+    }
 }
