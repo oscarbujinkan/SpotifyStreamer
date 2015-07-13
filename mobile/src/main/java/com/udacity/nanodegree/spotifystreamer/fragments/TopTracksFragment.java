@@ -18,6 +18,9 @@ import kaaes.spotify.webapi.android.models.Track;
 import kaaes.spotify.webapi.android.models.Tracks;
 
 /**
+ * For save the instance I use some code find in stackoverflow was parts of
+ * code.
+ *
  * Created by oscarBudo on 21-06-15.
  */
 public class TopTracksFragment extends Fragment implements TopTracksResultAdapterCallback{
