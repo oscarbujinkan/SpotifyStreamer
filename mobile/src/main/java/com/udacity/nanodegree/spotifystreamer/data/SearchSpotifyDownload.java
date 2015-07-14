@@ -11,6 +11,7 @@ import kaaes.spotify.webapi.android.SpotifyApi;
 import kaaes.spotify.webapi.android.SpotifyService;
 import kaaes.spotify.webapi.android.models.ArtistsPager;
 import kaaes.spotify.webapi.android.models.Tracks;
+import retrofit.RetrofitError;
 
 /**
  * Created by oscarfuentes on 19-06-15.
@@ -30,8 +31,12 @@ public class SearchSpotifyDownload {
 
             @Override
             protected ArtistsPager doInBackground(Void... params) {
-                ArtistsPager results = mSpotifyService.searchArtists(query);
-                return results;
+                try {
+                    ArtistsPager results = mSpotifyService.searchArtists(query);
+                    return results;
+                }catch(RetrofitError e){
+                    return null;
+                }
             }
 
             @Override
@@ -50,10 +55,14 @@ public class SearchSpotifyDownload {
 
             @Override
             protected Tracks doInBackground(Void... params) {
-                HashMap<String, Object> options=new HashMap<String,Object>();
-                options.put("country","SE");
-                Tracks results = mSpotifyService.getArtistTopTrack(artistId,options);
-                return results;
+                try {
+                    HashMap<String, Object> options = new HashMap<String, Object>();
+                    options.put("country", "SE");
+                    Tracks results = mSpotifyService.getArtistTopTrack(artistId, options);
+                    return results;
+                }catch(RetrofitError e){
+                    return null;
+                }
             }
 
             @Override

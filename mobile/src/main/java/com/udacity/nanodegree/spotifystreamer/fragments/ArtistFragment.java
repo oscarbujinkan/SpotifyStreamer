@@ -176,6 +176,13 @@ public class ArtistFragment extends Fragment implements SearchSpotifyCallback, A
     @Override
     public void onFail() {
         isSearching=false;
+        if(getActivity()!=null) {
+            if (!((MainActivity) getActivity()).isOnline()) {
+                Toast.makeText(getActivity(), R.string.no_connection, Toast.LENGTH_LONG).show();
+            } else {
+                Toast.makeText(getActivity(), R.string.no_artist_found_message, Toast.LENGTH_LONG).show();
+            }
+        }
     }
 
     @Override

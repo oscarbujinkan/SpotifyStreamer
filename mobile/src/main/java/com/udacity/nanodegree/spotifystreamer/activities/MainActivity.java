@@ -1,5 +1,7 @@
 package com.udacity.nanodegree.spotifystreamer.activities;
 
+import android.content.Context;
+import android.net.ConnectivityManager;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
@@ -81,5 +83,13 @@ public class MainActivity extends AppCompatActivity implements FragmentManager.O
             finish();
         }
         super.onBackPressed();
+    }
+
+    public boolean isOnline() {
+        ConnectivityManager cm =
+                (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+
+        return cm.getActiveNetworkInfo() != null &&
+                cm.getActiveNetworkInfo().isConnectedOrConnecting();
     }
 }
