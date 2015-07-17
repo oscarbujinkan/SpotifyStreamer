@@ -51,6 +51,7 @@ public class TopTracksResultAdapter extends RecyclerView.Adapter<TopTracksResult
         if(i< mTracks.tracks.size()) {
             Track track= mTracks.tracks.get(i);
             topTracksResultHolder.topTrackName.setText(track.name);
+            topTracksResultHolder.topAlbumName.setText(track.album.name);
             if(track.album.images.size()>0) {
                 Picasso.with(mContext).load(track.album.images.get(0).url).into(topTracksResultHolder.topTrackImage, new Callback() {
                     @Override

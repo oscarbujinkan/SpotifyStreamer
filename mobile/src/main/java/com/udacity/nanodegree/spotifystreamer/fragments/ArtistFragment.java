@@ -48,7 +48,7 @@ public class ArtistFragment extends Fragment implements SearchSpotifyCallback, A
     private SearchSpotifyDownload mSearchSpotifyDownload;
     private ArtistsResultAdapter mAdapter;
     private String mActualArtist;
-    private ArtistsPager mActualArtists;
+    private static ArtistsPager mActualArtists;
     public static final String TAG="ArtistFragment";
 
 
@@ -99,18 +99,18 @@ public class ArtistFragment extends Fragment implements SearchSpotifyCallback, A
         View v=LayoutInflater.from(getActivity()).inflate(R.layout.artist_fragment,container,false);
         mRecyclerView=(RecyclerView) v.findViewById(R.id.artist_result_recyclerview);
         mSearchBox=(EditText) v.findViewById(R.id.artist_result_search_box);
-        mSearchBox.addTextChangedListener(mSearchBoxWatcher);
-        mSearchBox.setOnEditorActionListener(mSearchBoxEditorListener);
         mSearchSpotifyDownload=new SearchSpotifyDownload();
         mRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
         if(savedInstanceState!=null){
-            if(mActualArtist!=null){
+            if(mActualArtists!=null){
+                mHandler.removeCallbacks(mSearchRunnable);
                 mAdapter = new ArtistsResultAdapter(getActivity(), mActualArtists, this);
                 mRecyclerView.setAdapter(mAdapter);
             }
         }
         return v;
     }
+
 
     private void searchArtist(){
         isSearching=true;
@@ -126,6 +126,9 @@ public class ArtistFragment extends Fragment implements SearchSpotifyCallback, A
             mActualArtists=af.getActualArtists();
             isSearching=false;
 
+        }else{
+            mSearchBox.addTextChangedListener(mSearchBoxWatcher);
+            mSearchBox.setOnEditorActionListener(mSearchBoxEditorListener);
         }
     }
 
@@ -159,10 +162,14 @@ public class ArtistFragment extends Fragment implements SearchSpotifyCallback, A
         if(object instanceof ArtistsPager) {
             if(((ArtistsPager) object)!=null&&((ArtistsPager) object).artists!=null&&((ArtistsPager) object).artists.items.size()>0) {
                 mActualArtists=(ArtistsPager) object;
-                mAdapter = new ArtistsResultAdapter(getActivity(), (ArtistsPager) object, this);
-                mRecyclerView.setAdapter(mAdapter);
+                if(getActivity()!=null) {
+                    mAdapter = new ArtistsResultAdapter(getActivity(), (ArtistsPager) object, this);
+                    mRecyclerView.setAdapter(mAdapter);
+                }
             }else{
-                Toast.makeText(getActivity(),R.string.no_artist_found_message,Toast.LENGTH_LONG).show();
+                if(getActivity()!=null) {
+                    Toast.makeText(getActivity(), R.string.no_artist_found_message, Toast.LENGTH_LONG).show();
+                }
             }
             isSearching = false;
         }else if(object instanceof Tracks){
