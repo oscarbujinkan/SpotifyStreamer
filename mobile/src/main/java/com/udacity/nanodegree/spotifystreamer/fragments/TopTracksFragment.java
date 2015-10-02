@@ -11,6 +11,7 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.udacity.nanodegree.spotifystreamer.R;
+import com.udacity.nanodegree.spotifystreamer.activities.MainActivity;
 import com.udacity.nanodegree.spotifystreamer.adapters.TopTracksResultAdapter;
 import com.udacity.nanodegree.spotifystreamer.interfaces.TopTracksResultAdapterCallback;
 
@@ -63,7 +64,10 @@ public class TopTracksFragment extends Fragment implements TopTracksResultAdapte
     }
 
     @Override
-    public void onItemClick(Track track) {
+    public void onItemClick(int i) {
+        SongFragment sf=new SongFragment();
+        sf.setTrack(mArtist,mTracks,i);
+        ((MainActivity) getActivity()).addFragmentToStack(sf, SongFragment.TAG);
 
     }
     public void onActivityCreated(Bundle savedInstanceState) {

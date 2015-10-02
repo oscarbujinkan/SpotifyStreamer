@@ -7,5 +7,5 @@ import kaaes.spotify.webapi.android.models.Track;
  */
 public interface TopTracksResultAdapterCallback {
 
-    void onItemClick(Track track);
+    void onItemClick(int position);
 }

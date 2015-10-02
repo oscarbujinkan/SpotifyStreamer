@@ -1,0 +1,47 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="60dp"
+    android:orientation="horizontal"
+    android:background="@android:color/black"
+    android:gravity="center_vertical"
+    >
+
+    <ImageButton
+                android:id="@+id/mediacontroller_undo"
+                android:src="@drawable/ic_action_previous"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="45dp"
+                android:scaleType="fitCenter"
+                />
+
+            <ImageButton
+                android:id="@+id/mediacontroller_play_pause"
+                android:src="@drawable/ic_action_play"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="45dp"
+                android:scaleType="fitCenter"
+                 />
+
+            <ImageButton
+                android:id="@+id/mediacontroller_forward"
+                android:src="@drawable/ic_action_next"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:scaleType="fitCenter"
+                android:layout_height="45dp"
+                />
+            <TextView
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="45dp"
+                android:textSize="20sp"
+                android:text="X"
+                android:textColor="@android:color/white"
+                android:gravity="center"
+                android:id="@+id/controller_close"
+                />
+
+
+ </LinearLayout>
