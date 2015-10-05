@@ -1,5 +1,6 @@
 package com.udacity.nanodegree.spotifystreamer.fragments;
 
+import android.content.Context;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
@@ -9,6 +10,7 @@ import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.InputMethodManager;
 
 import com.udacity.nanodegree.spotifystreamer.R;
 import com.udacity.nanodegree.spotifystreamer.activities.MainActivity;
@@ -63,7 +65,7 @@ public class TopTracksFragment extends Fragment implements TopTracksResultAdapte
         mArtist=artist;
     }
 
-    @Override
+   @Override
     public void onItemClick(int i) {
         SongFragment sf=new SongFragment();
         sf.setTrack(mArtist,mTracks,i);
@@ -72,7 +74,8 @@ public class TopTracksFragment extends Fragment implements TopTracksResultAdapte
     }
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
-
+        final InputMethodManager imm = (InputMethodManager) getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
+        imm.hideSoftInputFromWindow(getView().getWindowToken(), 0);
         if (savedInstanceState != null) {
             TopTracksFragment ttf= (TopTracksFragment) getActivity().getSupportFragmentManager().getFragment(savedInstanceState,this.getClass().getName());
             mTracks=ttf.getTracks();

@@ -1,40 +1,30 @@
 package com.udacity.nanodegree.spotifystreamer.core;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
-import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
-import android.graphics.Bitmap;
 import android.media.MediaPlayer;
 import android.media.MediaPlayer.OnCompletionListener;
 import android.media.MediaPlayer.OnPreparedListener;
-import android.os.AsyncTask;
 import android.os.Binder;
-import android.os.Build;
 import android.os.IBinder;
 import android.os.PowerManager;
 import android.support.annotation.Nullable;
 import android.support.v4.app.NotificationCompat;
-import android.util.Log;
 import android.widget.RemoteViews;
-import android.widget.SeekBar;
-import android.widget.Toast;
 
 import com.udacity.nanodegree.spotifystreamer.R;
 import com.udacity.nanodegree.spotifystreamer.activities.MainActivity;
 import com.udacity.nanodegree.spotifystreamer.interfaces.PlayerServiceInterface;
 
+import java.io.IOException;
+import java.util.ArrayList;
+
 public class PlayerService extends Service implements PlayerServiceInterface, OnPreparedListener, MediaPlayer.OnSeekCompleteListener,
         MediaPlayer.OnBufferingUpdateListener, OnCompletionListener, MediaPlayer.OnErrorListener, MediaPlayer.OnInfoListener{
-    public final static int PAUSED = 0;
-    public final static int PLAYING = 1;
 
     private final IBinder mBinder = new LocalBinder();
     private RemoteViews mRemoteViews;
@@ -61,9 +51,10 @@ public class PlayerService extends Service implements PlayerServiceInterface, On
     private ArrayList<String> mUrls;
     private int mCurrentSongPosition;
     private Notification mNotification;
+    private Context mContext;
+    private OnStateChange mStateChange;
 
 
-    private AsyncTask<Void, Void, Void> seekBarChanger;
 
 
     @Override
@@ -72,23 +63,26 @@ public class PlayerService extends Service implements PlayerServiceInterface, On
         mNotifiManager=(NotificationManager) getSystemService(NOTIFICATION_SERVICE);;
     }
 
-    void initPlayer(ArrayList<String> urls,int position) {
+   public void initPlayer(ArrayList<String> urls,int position, Context ctx,OnStateChange callback) {
         setCurrentState(STATE_IDLE);
         mUrls=urls;
         mCurrentSongPosition=position;
+       mStateChange=callback;
+       mContext=ctx;
         try{
             mPlayer = new MediaPlayer();
-            mPlayer.setWakeMode(getApplicationContext(), PowerManager.PARTIAL_WAKE_LOCK);
+            mPlayer.setWakeMode(mContext, PowerManager.PARTIAL_WAKE_LOCK);
             mPlayer.setOnBufferingUpdateListener(this);
             mPlayer.setOnCompletionListener(this);
             mPlayer.setOnErrorListener(this);
             mPlayer.setOnInfoListener(this);
             mPlayer.setOnPreparedListener(this);
             mPlayer.setOnSeekCompleteListener(this);
-            mPlayer.setDataSource(mUrls.get(position));
-
-            mPlayer.prepareAsync();
-            setCurrentState(STATE_PREPARED);
+            if(mUrls!=null) {
+                mPlayer.setDataSource(mUrls.get(position));
+                mPlayer.prepareAsync();
+                setCurrentState(STATE_PREPARED);
+            }
         }catch(UnsatisfiedLinkError e){
             e.printStackTrace();
         } catch (IOException e) {
@@ -122,6 +116,9 @@ public class PlayerService extends Service implements PlayerServiceInterface, On
             mPlayer.reset();
             mPlayer.setDataSource(mUrls.get(getNextSongPosition()));
             mPlayer.prepareAsync();
+            if(mStateChange!=null){
+                mStateChange.onCompletion();
+            }
             setCurrentState(STATE_PREPARED);
         } catch (IOException e) {
             e.printStackTrace();
@@ -140,7 +137,11 @@ public class PlayerService extends Service implements PlayerServiceInterface, On
 
     @Override
     public void onPrepared(MediaPlayer mp) {
+        if (mCurrentState == STATE_PREPARED) {
+            mp.start();
+            setCurrentState(STATE_PLAYING);
 
+        }
     }
 
     @Override
@@ -157,31 +158,31 @@ public class PlayerService extends Service implements PlayerServiceInterface, On
 
 
 
-    private void setSeekBarTracker() {
-        if (seekBarChanger != null)
-            seekBarChanger.cancel(false);
-            seekBarChanger = null;
-            seekBarChanger = new AsyncTask<Void, Void, Void>() {
-
-            @Override
-            protected Void doInBackground(Void... params) {
-                while (mPlayer != null && mPlayer.getCurrentPosition() < mPlayer.getDuration()){
-                    if (mCurrentState == PLAYING){
-                        int currentPosition = mPlayer.getCurrentPosition();
-//                        mSeekBar.setProgress(currentPosition);
-
-//            			int minutes = currentPosition/60, seconds = currentPosition%60;
-//                    	if (seconds >= 10) mMusicPlayerServiceBinder.setCurrentTime(minutes + ":" + seconds);
-//                    	else mMusicPlayerServiceBinder.setCurrentTime(minutes + ":0" + seconds);
-                    }
-
-                    try { Thread.sleep(100); } catch (InterruptedException e) {}
-                }
-                return null;
-            }
-        };
-        seekBarChanger.execute();
-    }
+//    private void setSeekBarTracker() {
+//        if (seekBarChanger != null)
+//            seekBarChanger.cancel(false);
+//            seekBarChanger = null;
+//            seekBarChanger = new AsyncTask<Void, Void, Void>() {
+//
+//            @Override
+//            protected Void doInBackground(Void... params) {
+//                while (mPlayer != null && mPlayer.getCurrentPosition() < mPlayer.getDuration()){
+//                    if (mCurrentState == PLAYING){
+//                        int currentPosition = mPlayer.getCurrentPosition();
+////                        mSeekbar.setProgress(currentPosition);
+////
+////            			int minutes = currentPosition/60, seconds = currentPosition%60;
+////                    	if (seconds >= 10) mMusicPlayerServiceBinder.setCurrentTime(minutes + ":" + seconds);
+////                    	else mMusicPlayerServiceBinder.setCurrentTime(minutes + ":0" + seconds);
+//                    }
+//
+//                    try { Thread.sleep(100); } catch (InterruptedException e) {}
+//                }
+//                return null;
+//            }
+//        };
+//        seekBarChanger.execute();
+//    }
 
     public void pause() {
         if (mCurrentState == STATE_PLAYING) {
@@ -248,21 +249,21 @@ public class PlayerService extends Service implements PlayerServiceInterface, On
         //Define what you want to do after clicked the button in notification.
         //Here we launcher a service by an action named "ACTION_STOP" which will stop the music play.
         close = new Intent(ACTION_CLOSE);
-        pendingIntentclose = PendingIntent.getService(getApplicationContext(),
+        pendingIntentclose = PendingIntent.getService(mContext,
                 REQUEST_CODE_STOP, close,
                 PendingIntent.FLAG_UPDATE_CURRENT);
         playpause = new Intent(ACTION_PLAYPAUSE);
-        pendingIntentplaypause = PendingIntent.getService(getApplicationContext(),
+        pendingIntentplaypause = PendingIntent.getService(mContext,
                 REQUEST_CODE_STOP, playpause,
                 PendingIntent.FLAG_UPDATE_CURRENT);
 
         forward = new Intent(ACTION_FORWARD);
-        pendingIntentforward = PendingIntent.getService(getApplicationContext(),
+        pendingIntentforward = PendingIntent.getService(mContext,
                 REQUEST_CODE_STOP, forward,
                 PendingIntent.FLAG_UPDATE_CURRENT);
 
         back = new Intent(ACTION_BACK);
-        pendingIntentback = PendingIntent.getService(getApplicationContext(),
+        pendingIntentback = PendingIntent.getService(mContext,
                 REQUEST_CODE_STOP, back,
                 PendingIntent.FLAG_UPDATE_CURRENT);
 
@@ -293,13 +294,13 @@ public class PlayerService extends Service implements PlayerServiceInterface, On
 
 
         //Create the notification instance.
-        mNotification = new NotificationCompat.Builder(getApplicationContext())
+        mNotification = new NotificationCompat.Builder(mContext)
                 .setSmallIcon(R.mipmap.ic_launcher).setOngoing(true)
                 .setWhen(System.currentTimeMillis())
                 .setContent(mRemoteViewsSmall)
                 .setContentIntent(
-                        PendingIntent.getActivity(getApplicationContext(), 10,
-                                new Intent(getApplicationContext(), MainActivity.class)
+                        PendingIntent.getActivity(mContext, 10,
+                                new Intent(mContext, MainActivity.class)
                                         .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP),
                                 0)
                 )
@@ -315,6 +316,9 @@ public class PlayerService extends Service implements PlayerServiceInterface, On
 
     public void setCurrentState(int mCurrentState) {
         this.mCurrentState = mCurrentState;
+        if(mStateChange!=null){
+            mStateChange.onStateChanged();
+        }
     }
 
     public int getNextSongPosition(){
@@ -322,7 +326,25 @@ public class PlayerService extends Service implements PlayerServiceInterface, On
         return mCurrentSongPosition;
     }
     public int getPreviousSongPosition(){
-        mCurrentSongPosition=mCurrentSongPosition<mUrls.size()?mCurrentSongPosition-1:mUrls.size()-1;
+        mCurrentSongPosition=mCurrentSongPosition!=0?mCurrentSongPosition-1:mUrls.size()-1;
         return mCurrentSongPosition;
+    }
+
+    public boolean isPlaying(){
+        return mCurrentState==STATE_PLAYING;
+    }
+
+    public interface OnStateChange{
+        void onStateChanged();
+        void onCompletion();
+    }
+    public int getDuration(){
+        return mPlayer.getDuration();
+    }
+    public int getCurrentPosition(){
+        return mPlayer.getCurrentPosition();
+    }
+    public int getCurrentState(){
+        return mCurrentState;
     }
 }

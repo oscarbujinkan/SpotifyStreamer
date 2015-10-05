@@ -47,7 +47,7 @@ public class TopTracksResultAdapter extends RecyclerView.Adapter<TopTracksResult
             Track track= mTracks.tracks.get(i);
             topTracksResultHolder.topTrackName.setText(track.name);
             topTracksResultHolder.topAlbumName.setText(track.album.name);
-            ((View)topTracksResultHolder.topTrackImage.getParent()).setOnClickListener(new View.OnClickListener() {
+            topTracksResultHolder.itemView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
                     mCallback.onItemClick(i);

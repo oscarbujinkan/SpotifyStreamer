@@ -37,20 +37,20 @@ public class ArtistsResultAdapter extends RecyclerView.Adapter<ArtistResultHolde
 
         View v= LayoutInflater.from(mContext).inflate(R.layout.artist_result_item, viewGroup,false);
         ArtistResultHolder holder= new ArtistResultHolder(v);
-        v.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                mCallback.onItemClick(mArtists.artists.items.get(i));
-            }
-        });
         return holder;
     }
 
     @Override
-    public void onBindViewHolder(final ArtistResultHolder artistResultHolder, int i) {
+    public void onBindViewHolder(final ArtistResultHolder artistResultHolder, final int i) {
         if(i<mArtists.artists.items.size()) {
             Artist artist=mArtists.artists.items.get(i);
             artistResultHolder.artistName.setText(artist.name);
+            artistResultHolder.itemView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    mCallback.onItemClick(mArtists.artists.items.get(i));
+                }
+            });
             if(artist.images.size()>0) {
                 Picasso.with(mContext).load(artist.images.get(0).url).into(artistResultHolder.artistImage, new Callback() {
                     @Override
