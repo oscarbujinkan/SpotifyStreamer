@@ -14,6 +14,7 @@ import android.os.IBinder;
 import android.os.PowerManager;
 import android.support.annotation.Nullable;
 import android.support.v4.app.NotificationCompat;
+import android.text.TextUtils;
 import android.widget.RemoteViews;
 
 import com.udacity.nanodegree.spotifystreamer.R;
@@ -69,25 +70,36 @@ public class PlayerService extends Service implements PlayerServiceInterface, On
         mCurrentSongPosition=position;
        mStateChange=callback;
        mContext=ctx;
-        try{
-            mPlayer = new MediaPlayer();
-            mPlayer.setWakeMode(mContext, PowerManager.PARTIAL_WAKE_LOCK);
-            mPlayer.setOnBufferingUpdateListener(this);
-            mPlayer.setOnCompletionListener(this);
-            mPlayer.setOnErrorListener(this);
-            mPlayer.setOnInfoListener(this);
-            mPlayer.setOnPreparedListener(this);
-            mPlayer.setOnSeekCompleteListener(this);
-            if(mUrls!=null) {
-                mPlayer.setDataSource(mUrls.get(position));
-                mPlayer.prepareAsync();
-                setCurrentState(STATE_PREPARED);
-            }
-        }catch(UnsatisfiedLinkError e){
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+       if(mPlayer!=null){
+           try {
+               mPlayer.reset();
+               mPlayer.setDataSource(mUrls.get(position));
+               mPlayer.prepareAsync();
+               setCurrentState(STATE_PREPARED);
+           } catch (IOException e) {
+               e.printStackTrace();
+           }
+       }else {
+           try {
+               mPlayer = new MediaPlayer();
+               mPlayer.setWakeMode(mContext, PowerManager.PARTIAL_WAKE_LOCK);
+               mPlayer.setOnBufferingUpdateListener(this);
+               mPlayer.setOnCompletionListener(this);
+               mPlayer.setOnErrorListener(this);
+               mPlayer.setOnInfoListener(this);
+               mPlayer.setOnPreparedListener(this);
+               mPlayer.setOnSeekCompleteListener(this);
+               if (mUrls != null) {
+                   mPlayer.setDataSource(mUrls.get(position));
+                   mPlayer.prepareAsync();
+                   setCurrentState(STATE_PREPARED);
+               }
+           } catch (UnsatisfiedLinkError e) {
+               e.printStackTrace();
+           } catch (IOException e) {
+               e.printStackTrace();
+           }
+       }
 
     }
     @Nullable
@@ -242,7 +254,7 @@ public class PlayerService extends Service implements PlayerServiceInterface, On
 
 
         //Inflate a remote view with a layout which you want to display in the notification bar.
-        mRemoteViewsSmall = new RemoteViews(getPackageName(),
+        mRemoteViewsSmall = new RemoteViews(mContext.getPackageName(),
                 R.layout.notification_control_mini);
 
 
@@ -270,14 +282,14 @@ public class PlayerService extends Service implements PlayerServiceInterface, On
 
         //In R.layout.notification_control_bar,there is a button view identified by bar_btn_stop
         //We bind a pendingIntent with this button view so when user click the button,it will excute the intent action.
-        mRemoteViews.setOnClickPendingIntent(R.id.controller_close,
-                pendingIntentclose);
-        mRemoteViews.setOnClickPendingIntent(R.id.mediacontroller_play_pause,
-                pendingIntentplaypause);
-        mRemoteViews.setOnClickPendingIntent(R.id.mediacontroller_undo,
-                pendingIntentback);
-        mRemoteViews.setOnClickPendingIntent(R.id.mediacontroller_forward,
-                pendingIntentforward);
+//        mRemoteViews.setOnClickPendingIntent(R.id.controller_close,
+//                pendingIntentclose);
+//        mRemoteViews.setOnClickPendingIntent(R.id.mediacontroller_play_pause,
+//                pendingIntentplaypause);
+//        mRemoteViews.setOnClickPendingIntent(R.id.mediacontroller_undo,
+//                pendingIntentback);
+//        mRemoteViews.setOnClickPendingIntent(R.id.mediacontroller_forward,
+//                pendingIntentforward);
 
         mRemoteViewsSmall.setOnClickPendingIntent(R.id.controller_close,
                 pendingIntentclose);
@@ -320,9 +332,31 @@ public class PlayerService extends Service implements PlayerServiceInterface, On
             mStateChange.onStateChanged();
         }
     }
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        if (intent != null) {
+            String action = intent.getAction();
+            if (!TextUtils.isEmpty(action)) {
+                if (action.equals(ACTION_PLAYPAUSE)) {
+                    if(isPlaying()){
+                        pause();
+                    }else{
+                        play();
+                    }
+                }else if(action.equals(ACTION_BACK)) {
+                    previousSong();
+                }else if(action.equals(ACTION_FORWARD)){
+                    nextSong();
+                }else if(action.equals(ACTION_CLOSE)){
+
+                }
+            }
+        }
+        return Service.START_STICKY;
+    }
 
     public int getNextSongPosition(){
-        mCurrentSongPosition=mCurrentSongPosition<mUrls.size()?mCurrentSongPosition+1:0;
+        mCurrentSongPosition=mCurrentSongPosition+1<mUrls.size()?mCurrentSongPosition+1:0;
         return mCurrentSongPosition;
     }
     public int getPreviousSongPosition(){
@@ -346,5 +380,15 @@ public class PlayerService extends Service implements PlayerServiceInterface, On
     }
     public int getCurrentState(){
         return mCurrentState;
+    }
+
+    public void killNotification() {
+        if(isNotificationVisible) {
+            stopForeground(true);
+//            mHandler.removeCallbacks(mUpdateNotificationRunnable);
+            NotificationManager notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+            notificationManager.cancel(NOTIFICATION_ID);
+            isNotificationVisible = false;
+        }
     }
 }

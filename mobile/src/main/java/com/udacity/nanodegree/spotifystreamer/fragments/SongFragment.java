@@ -7,6 +7,7 @@ import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.annotation.Nullable;
+import android.support.v4.app.DialogFragment;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -14,6 +15,7 @@ import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
@@ -23,6 +25,7 @@ import com.google.android.gms.wearable.Wearable;
 import com.squareup.picasso.Callback;
 import com.squareup.picasso.Picasso;
 import com.udacity.nanodegree.spotifystreamer.R;
+import com.udacity.nanodegree.spotifystreamer.activities.MainActivity;
 import com.udacity.nanodegree.spotifystreamer.core.PlayerService;
 import com.udacity.nanodegree.spotifystreamer.utils.SpotifyUtils;
 
@@ -35,7 +38,7 @@ import kaaes.spotify.webapi.android.models.Tracks;
 /**
  * Created by oscarfuentes on 21-07-15.
  */
-public class SongFragment extends Fragment implements SeekBar.OnSeekBarChangeListener, PlayerService.OnStateChange{
+public class SongFragment extends DialogFragment implements SeekBar.OnSeekBarChangeListener, PlayerService.OnStateChange{
 
     public static final String TAG="SongFragment";
     private static final long TiME_UPDATE_PROGRESS=1000;
@@ -57,6 +60,7 @@ public class SongFragment extends Fragment implements SeekBar.OnSeekBarChangeLis
     private Tracks mTracks;
     private ArrayList<String> mUrls;
     private GoogleApiClient mGoogleApiClient;
+    private ProgressBar mProgressCover;
     private Handler mHandler=new Handler();
 
 
@@ -77,7 +81,11 @@ public class SongFragment extends Fragment implements SeekBar.OnSeekBarChangeLis
         }
     };
 
-
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setRetainInstance(true);
+    }
 
     @Nullable
     @Override
@@ -138,8 +146,10 @@ public class SongFragment extends Fragment implements SeekBar.OnSeekBarChangeLis
         mPlayPauseButton=(ImageButton) v.findViewById(R.id.song_fragment_play_button);
         mNextButton=(ImageButton) v.findViewById(R.id.song_fragment_next_button);
         mSeekBar=(SeekBar) v.findViewById(R.id.song_fragment_progress_bar);
-        mPlayer=new PlayerService();
+        mProgressCover=(ProgressBar) v.findViewById(R.id.song_fragment_progress_cover);
+        mPlayer=((MainActivity)getActivity()).getPlayer();
         mPlayer.initPlayer(mUrls, mCurrentTrackPosition, getActivity(), this);
+        mPlayer.killNotification();
     }
     private void setViewsListeners(){
         mPlayPauseButton.setOnClickListener(new View.OnClickListener() {
@@ -172,13 +182,13 @@ public class SongFragment extends Fragment implements SeekBar.OnSeekBarChangeLis
         mNextButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if(mCurrentTrackPosition<mTracks.tracks.size()){
-                    mCurrentTrackPosition=mCurrentTrackPosition+1;
-                    mTrack=mTracks.tracks.get(mCurrentTrackPosition);
+                if (mCurrentTrackPosition + 1 < mTracks.tracks.size()) {
+                    mCurrentTrackPosition = mCurrentTrackPosition + 1;
+                    mTrack = mTracks.tracks.get(mCurrentTrackPosition);
                     updateTrack();
-                }else{
-                    mCurrentTrackPosition=0;
-                    mTrack=mTracks.tracks.get(mCurrentTrackPosition);
+                } else {
+                    mCurrentTrackPosition = 0;
+                    mTrack = mTracks.tracks.get(mCurrentTrackPosition);
                     updateTrack();
                 }
                 mPlayer.nextSong();
@@ -224,24 +234,25 @@ public class SongFragment extends Fragment implements SeekBar.OnSeekBarChangeLis
             String minutes=(String.valueOf(mTrack.duration_ms/60000));
             String seconds=String.valueOf((mTrack.duration_ms%60000)/1000);
             mEndTime.setText(minutes + ":" + seconds);
-
+            mProgressCover.setVisibility(View.VISIBLE);
             if(mTrack.album.images.size()>0) {
                 Picasso.with(getActivity()).load(mTrack.album.images.get(0).url).into(mSongImage, new Callback() {
                     @Override
                     public void onSuccess() {
-
+                        mProgressCover.setVisibility(View.GONE);
                     }
 
                     @Override
                     public void onError() {
                         mSongImage.setImageDrawable(getResources().getDrawable(R.drawable.ic_no_image));
+                        mProgressCover.setVisibility(View.GONE);
                     }
                 });
             }else{
                 mSongImage.setImageDrawable(getResources().getDrawable(R.drawable.ic_no_image));
             }
             mSeekBar.setProgress(0);
-            mActualTime.setText("00:00");
+            mActualTime.setText("0:00");
         }
     }
 
@@ -276,7 +287,7 @@ public class SongFragment extends Fragment implements SeekBar.OnSeekBarChangeLis
 
     @Override
     public void onStateChanged() {
-        if(!this.isDetached()) {
+        if(isAdded()) {
             if (mPlayer.isPlaying()) {
                 mHandler.removeCallbacks(mProgressRunnable);
                 mHandler.postDelayed(mProgressRunnable, TiME_UPDATE_PROGRESS);
@@ -294,7 +305,7 @@ public class SongFragment extends Fragment implements SeekBar.OnSeekBarChangeLis
 
     @Override
     public void onCompletion() {
-        if(mCurrentTrackPosition<mTracks.tracks.size()){
+        if(mCurrentTrackPosition+1<mTracks.tracks.size()){
             mCurrentTrackPosition=mCurrentTrackPosition+1;
             mTrack=mTracks.tracks.get(mCurrentTrackPosition);
             updateTrack();
@@ -306,7 +317,8 @@ public class SongFragment extends Fragment implements SeekBar.OnSeekBarChangeLis
     }
 
 
-//    @Override
+
+    //    @Override
 //    public void run() {
 //        int currentPosition = 0;
 //        int total = mPlayer.getDuration();

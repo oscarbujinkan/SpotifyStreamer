@@ -84,6 +84,12 @@ public class TopTracksFragment extends Fragment implements TopTracksResultAdapte
         }
     }
 
+    public void updateList(){
+        mAdapter=new TopTracksResultAdapter(getActivity(),mTracks,this);
+        mTopRecyclerView.setAdapter(mAdapter);
+        mAdapter.notifyDataSetChanged();
+    }
+
     @Override
     public void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);

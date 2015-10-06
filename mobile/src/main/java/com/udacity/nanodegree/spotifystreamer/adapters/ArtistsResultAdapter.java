@@ -23,6 +23,7 @@ public class ArtistsResultAdapter extends RecyclerView.Adapter<ArtistResultHolde
     private ArtistsPager mArtists;
     private Context mContext;
     private ArtistResultAdapterCallback mCallback;
+    private int mSelectedItem=-1;
 
 
     public ArtistsResultAdapter(Context context, ArtistsPager artists, ArtistResultAdapterCallback l){
@@ -48,9 +49,15 @@ public class ArtistsResultAdapter extends RecyclerView.Adapter<ArtistResultHolde
             artistResultHolder.itemView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    mCallback.onItemClick(mArtists.artists.items.get(i));
+                    mCallback.onItemClick(mArtists.artists.items.get(i),i);
+                    mSelectedItem=i;
                 }
             });
+            if(i==mSelectedItem){
+                artistResultHolder.itemView.setBackgroundResource(R.color.artist_selected_item);
+            }else{
+                artistResultHolder.itemView.setBackgroundResource(R.color.artist_unselected_item);
+            }
             if(artist.images.size()>0) {
                 Picasso.with(mContext).load(artist.images.get(0).url).into(artistResultHolder.artistImage, new Callback() {
                     @Override
@@ -78,5 +85,9 @@ public class ArtistsResultAdapter extends RecyclerView.Adapter<ArtistResultHolde
     @Override
     public int getItemCount() {
         return mArtists.artists.items.size();
+    }
+
+    public void setSelectedItem(int selected){
+        mSelectedItem=selected;
     }
 }

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Artist Fragment -->
+    <color name="artist_unselected_item">#ffffff</color>
+    <color name="artist_selected_item">#fb9393</color>
+</resources>

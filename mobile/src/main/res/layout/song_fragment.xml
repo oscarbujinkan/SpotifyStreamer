@@ -20,14 +20,23 @@
         android:layout_weight="1"
         android:text="Ghost Stories"
         />
-    <ImageView
-        android:id="@+id/song_fragment_song_image"
+    <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="9"
+        >
+    <ImageView
+        android:id="@+id/song_fragment_song_image"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
         android:layout_marginLeft="10dp"
         android:layout_marginRight="10dp"
         />
+        <ProgressBar
+            android:id="@+id/song_fragment_progress_cover"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+    </RelativeLayout>
     <TextView
         android:id="@+id/song_fragment_song_name"
         android:layout_width="wrap_content"

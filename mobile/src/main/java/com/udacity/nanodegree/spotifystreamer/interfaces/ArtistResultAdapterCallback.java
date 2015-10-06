@@ -7,5 +7,5 @@ import kaaes.spotify.webapi.android.models.Artist;
  */
 public interface ArtistResultAdapterCallback {
 
-    void onItemClick(Artist artist);
+    void onItemClick(Artist artist, int position);
 }

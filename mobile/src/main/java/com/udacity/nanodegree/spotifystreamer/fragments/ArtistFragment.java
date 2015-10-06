@@ -42,6 +42,7 @@ public class ArtistFragment extends Fragment implements SearchSpotifyCallback, A
     private static final long TIME_TO_SEARCH=800;
     private static final String SEARCHING_BOOL="issearching";
     private static final String ARISTS_RESULT="artists";
+    private static final String POSITION_SELECTED_KEY="selected_key";
     private static final int MIN_SEARCH_TEXT_SIZE=3;
     private boolean isSearching=false;
     private Handler mHandler=new Handler();
@@ -50,13 +51,19 @@ public class ArtistFragment extends Fragment implements SearchSpotifyCallback, A
     private String mActualArtist;
     private static ArtistsPager mActualArtists;
     public static final String TAG="ArtistFragment";
+    private int mCurrentPosition;
+    private boolean mConfigurationChange=false;
 
 
     private Runnable mSearchRunnable=new Runnable() {
         @Override
         public void run() {
             if(!isSearching){
-                searchArtist();
+                if(!mConfigurationChange) {
+                    searchArtist();
+                }else{
+                    mConfigurationChange=false;
+                }
             }
         }
     };
@@ -86,6 +93,7 @@ public class ArtistFragment extends Fragment implements SearchSpotifyCallback, A
             if (actionId == EditorInfo.IME_ACTION_SEARCH) {
                 mHandler.removeCallbacks(mSearchRunnable);
                 searchArtist();
+
                 return true;
             }
             return false;
@@ -108,6 +116,14 @@ public class ArtistFragment extends Fragment implements SearchSpotifyCallback, A
                 mRecyclerView.setAdapter(mAdapter);
             }
         }
+        if(savedInstanceState!=null&&savedInstanceState.containsKey(POSITION_SELECTED_KEY)){
+            mCurrentPosition=savedInstanceState.getInt(POSITION_SELECTED_KEY);
+            if(mAdapter!=null) {
+                mAdapter.setSelectedItem(mCurrentPosition);
+                mAdapter.notifyDataSetChanged();
+            }
+            mRecyclerView.scrollToPosition(mCurrentPosition);
+        }
         return v;
     }
 
@@ -125,17 +141,20 @@ public class ArtistFragment extends Fragment implements SearchSpotifyCallback, A
             ArtistFragment af= (ArtistFragment) getActivity().getSupportFragmentManager().getFragment(savedInstanceState,this.getClass().getName());
             mActualArtists=af.getActualArtists();
             isSearching=false;
+            mConfigurationChange=true;
 
-        }else{
-            mSearchBox.addTextChangedListener(mSearchBoxWatcher);
-            mSearchBox.setOnEditorActionListener(mSearchBoxEditorListener);
         }
+        mSearchBox.addTextChangedListener(mSearchBoxWatcher);
+        mSearchBox.setOnEditorActionListener(mSearchBoxEditorListener);
+
     }
 
     @Override
     public void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
-        getActivity().getSupportFragmentManager().putFragment(outState,this.getClass().getName(),this);
+        outState.putInt(POSITION_SELECTED_KEY,mCurrentPosition);
+        getActivity().getSupportFragmentManager().putFragment(outState, this.getClass().getName(), this);
+
     }
 
 
@@ -176,7 +195,12 @@ public class ArtistFragment extends Fragment implements SearchSpotifyCallback, A
             TopTracksFragment ttf=new TopTracksFragment();
             ttf.setTracks((Tracks) object);
             ttf.setArtist(mActualArtist);
-            ((MainActivity) getActivity()).addFragmentToStack(ttf, TopTracksFragment.TAG);
+            Fragment fg=((MainActivity) getActivity()).addFragmentToStack(ttf, TopTracksFragment.TAG);
+            if(fg!=null){
+                ((TopTracksFragment)fg).setTracks((Tracks) object);
+                ((TopTracksFragment)fg).setArtist(mActualArtist);
+                ((TopTracksFragment)fg).updateList();
+            }
         }
     }
 
@@ -193,9 +217,11 @@ public class ArtistFragment extends Fragment implements SearchSpotifyCallback, A
     }
 
     @Override
-    public void onItemClick(Artist artist) {
+    public void onItemClick(Artist artist, int position) {
         mActualArtist=artist.name;
         mSearchSpotifyDownload.searchTopTenSongs(artist.id,this);
+        mCurrentPosition=position;
+        mAdapter.notifyDataSetChanged();
     }
     public ArtistsPager getActualArtists(){
         return mActualArtists;

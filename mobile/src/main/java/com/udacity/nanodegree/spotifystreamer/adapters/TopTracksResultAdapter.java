@@ -79,6 +79,6 @@ public class TopTracksResultAdapter extends RecyclerView.Adapter<TopTracksResult
 
     @Override
     public int getItemCount() {
-        return mTracks.tracks.size();
+        return mTracks!=null&&mTracks.tracks!=null?mTracks.tracks.size():0;
     }
 }
