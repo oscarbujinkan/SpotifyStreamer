@@ -167,35 +167,6 @@ public class PlayerService extends Service implements PlayerServiceInterface, On
         }
     }
 
-
-
-
-//    private void setSeekBarTracker() {
-//        if (seekBarChanger != null)
-//            seekBarChanger.cancel(false);
-//            seekBarChanger = null;
-//            seekBarChanger = new AsyncTask<Void, Void, Void>() {
-//
-//            @Override
-//            protected Void doInBackground(Void... params) {
-//                while (mPlayer != null && mPlayer.getCurrentPosition() < mPlayer.getDuration()){
-//                    if (mCurrentState == PLAYING){
-//                        int currentPosition = mPlayer.getCurrentPosition();
-////                        mSeekbar.setProgress(currentPosition);
-////
-////            			int minutes = currentPosition/60, seconds = currentPosition%60;
-////                    	if (seconds >= 10) mMusicPlayerServiceBinder.setCurrentTime(minutes + ":" + seconds);
-////                    	else mMusicPlayerServiceBinder.setCurrentTime(minutes + ":0" + seconds);
-//                    }
-//
-//                    try { Thread.sleep(100); } catch (InterruptedException e) {}
-//                }
-//                return null;
-//            }
-//        };
-//        seekBarChanger.execute();
-//    }
-
     public void pause() {
         if (mCurrentState == STATE_PLAYING) {
             if(mPlayer!=null) {
@@ -207,6 +178,9 @@ public class PlayerService extends Service implements PlayerServiceInterface, On
 
     @Override
     public void stop() {
+        mPlayer.stop();
+        mPlayer.reset();
+        setCurrentState(STATE_STOPED);
 
     }
 
@@ -280,16 +254,6 @@ public class PlayerService extends Service implements PlayerServiceInterface, On
                 PendingIntent.FLAG_UPDATE_CURRENT);
 
 
-        //In R.layout.notification_control_bar,there is a button view identified by bar_btn_stop
-        //We bind a pendingIntent with this button view so when user click the button,it will excute the intent action.
-//        mRemoteViews.setOnClickPendingIntent(R.id.controller_close,
-//                pendingIntentclose);
-//        mRemoteViews.setOnClickPendingIntent(R.id.mediacontroller_play_pause,
-//                pendingIntentplaypause);
-//        mRemoteViews.setOnClickPendingIntent(R.id.mediacontroller_undo,
-//                pendingIntentback);
-//        mRemoteViews.setOnClickPendingIntent(R.id.mediacontroller_forward,
-//                pendingIntentforward);
 
         mRemoteViewsSmall.setOnClickPendingIntent(R.id.controller_close,
                 pendingIntentclose);
@@ -302,6 +266,8 @@ public class PlayerService extends Service implements PlayerServiceInterface, On
 
         if (mCurrentState == STATE_PAUSED) {
             mRemoteViewsSmall.setImageViewResource(R.id.mediacontroller_play_pause, R.drawable.ic_action_play);
+        }else if(isPlaying()){
+            mRemoteViewsSmall.setImageViewResource(R.id.mediacontroller_play_pause, R.drawable.ic_action_pause);
         }
 
 
@@ -340,15 +306,21 @@ public class PlayerService extends Service implements PlayerServiceInterface, On
                 if (action.equals(ACTION_PLAYPAUSE)) {
                     if(isPlaying()){
                         pause();
+                        mRemoteViewsSmall.setImageViewResource(R.id.mediacontroller_play_pause, R.drawable.ic_action_play);
                     }else{
                         play();
+                        mRemoteViewsSmall.setImageViewResource(R.id.mediacontroller_play_pause, R.drawable.ic_action_pause);
                     }
+                    if (mNotifiManager == null) {
+                        mNotifiManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+                    }
+                    startForeground(NOTIFICATION_ID, mNotification);
                 }else if(action.equals(ACTION_BACK)) {
                     previousSong();
                 }else if(action.equals(ACTION_FORWARD)){
                     nextSong();
                 }else if(action.equals(ACTION_CLOSE)){
-
+                    closePlayer();
                 }
             }
         }
@@ -390,5 +362,11 @@ public class PlayerService extends Service implements PlayerServiceInterface, On
             notificationManager.cancel(NOTIFICATION_ID);
             isNotificationVisible = false;
         }
+    }
+    private void closePlayer(){
+        stopSelf();
+        killNotification();
+        System.exit(0);
+
     }
 }

@@ -9,9 +9,11 @@ import android.os.Handler;
 import android.support.annotation.Nullable;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.Fragment;
+import android.support.v7.app.AppCompatActivity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.ImageButton;
 import android.widget.ImageView;
@@ -85,6 +87,14 @@ public class SongFragment extends DialogFragment implements SeekBar.OnSeekBarCha
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setRetainInstance(true);
+
+    }
+
+    @Override
+    public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        final InputMethodManager imm = (InputMethodManager) getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
+        imm.hideSoftInputFromWindow(getView().getWindowToken(), 0);
     }
 
     @Nullable
@@ -114,7 +124,7 @@ public class SongFragment extends DialogFragment implements SeekBar.OnSeekBarCha
                 .addApi(Wearable.API)
                 .build();
         mGoogleApiClient.connect();
-        init(v);
+        init(v,savedInstanceState);
         setViewsListeners();
         updateTrack();
         return v;
@@ -135,7 +145,7 @@ public class SongFragment extends DialogFragment implements SeekBar.OnSeekBarCha
         super.onStop();
     }
 
-    private void init(View v){
+    private void init(View v, Bundle savedInstance){
         mArtistName=(TextView) v.findViewById(R.id.song_fragment_artist_name);
         mAlbumName=(TextView) v.findViewById(R.id.song_fragment_album_name);
         mSongName=(TextView) v.findViewById(R.id.song_fragment_song_name);
@@ -148,8 +158,13 @@ public class SongFragment extends DialogFragment implements SeekBar.OnSeekBarCha
         mSeekBar=(SeekBar) v.findViewById(R.id.song_fragment_progress_bar);
         mProgressCover=(ProgressBar) v.findViewById(R.id.song_fragment_progress_cover);
         mPlayer=((MainActivity)getActivity()).getPlayer();
-        mPlayer.initPlayer(mUrls, mCurrentTrackPosition, getActivity(), this);
+        if(savedInstance==null) {
+            mPlayer.initPlayer(mUrls, mCurrentTrackPosition, getActivity(), this);
+        }
         mPlayer.killNotification();
+        if(mPlayer.isPlaying()){
+            mPlayPauseButton.setImageDrawable(getResources().getDrawable(R.drawable.ic_action_pause));
+        }
     }
     private void setViewsListeners(){
         mPlayPauseButton.setOnClickListener(new View.OnClickListener() {
@@ -232,7 +247,8 @@ public class SongFragment extends DialogFragment implements SeekBar.OnSeekBarCha
             mAlbumName.setText(mTrack.album.name);
             mSongName.setText(mTrack.name);
             String minutes=(String.valueOf(mTrack.duration_ms/60000));
-            String seconds=String.valueOf((mTrack.duration_ms%60000)/1000);
+            int secondsInt= (int) ((mTrack.duration_ms%60000)/1000);
+            String seconds=secondsInt<10?"0"+String.valueOf(secondsInt):String.valueOf(secondsInt);
             mEndTime.setText(minutes + ":" + seconds);
             mProgressCover.setVisibility(View.VISIBLE);
             if(mTrack.album.images.size()>0) {
@@ -253,6 +269,10 @@ public class SongFragment extends DialogFragment implements SeekBar.OnSeekBarCha
             }
             mSeekBar.setProgress(0);
             mActualTime.setText("0:00");
+            if(getActivity()!=null&&!((MainActivity)getActivity()).isTablet()){
+                ((MainActivity) getActivity()).getSupportActionBar().setTitle(mTrack.name);
+                ((AppCompatActivity)getActivity()).getSupportActionBar().setSubtitle(mArtist);
+            }
         }
     }
 
@@ -316,23 +336,12 @@ public class SongFragment extends DialogFragment implements SeekBar.OnSeekBarCha
         }
     }
 
+    @Override
+    public void onDestroyView() {
+        if (getDialog() != null && getRetainInstance()) {
+            getDialog().setDismissMessage(null);
+        }
+        super.onDestroyView();
+    }
 
-
-    //    @Override
-//    public void run() {
-//        int currentPosition = 0;
-//        int total = mPlayer.getDuration();
-//        mSeekBar.setMax(total);
-//        while (mPlayer != null && currentPosition < total) {
-//            try {
-//                Thread.sleep(1000);
-//                currentPosition = mPlayer.getCurrentPosition();
-//            } catch (InterruptedException e) {
-//                return;
-//            } catch (Exception e) {
-//                return;
-//            }
-//            mSeekBar.setProgress(currentPosition);
-//        }
-//    }
 }

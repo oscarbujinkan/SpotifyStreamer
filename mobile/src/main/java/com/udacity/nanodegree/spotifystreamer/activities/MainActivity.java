@@ -1,13 +1,18 @@
 package com.udacity.nanodegree.spotifystreamer.activities;
 
+import android.content.ComponentName;
 import android.content.Context;
+import android.content.Intent;
+import android.content.ServiceConnection;
 import android.net.ConnectivityManager;
 import android.os.Bundle;
+import android.os.IBinder;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.WindowManager;
 
 import com.udacity.nanodegree.spotifystreamer.R;
 import com.udacity.nanodegree.spotifystreamer.core.PlayerService;
@@ -18,19 +23,23 @@ import com.udacity.nanodegree.spotifystreamer.fragments.TopTracksFragment;
 public class MainActivity extends AppCompatActivity implements FragmentManager.OnBackStackChangedListener {
 
     private boolean mTabletView=false;
-    private PlayerService mPlayer;
+    private static PlayerService mPlayer;
+    private Intent mServiceIntent;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN);
         setContentView(R.layout.activity_main);
-        mPlayer=new PlayerService();
+        if(savedInstanceState==null) {
+            mServiceIntent = new Intent(this, PlayerService.class);
+            startService(mServiceIntent);
+        }
         if(getSupportFragmentManager().findFragmentById(R.id.fragment_artist)!=null) {
             mTabletView=true;
             if (savedInstanceState == null ) {
                 addFragmentToStack(new TopTracksFragment(), TopTracksFragment.TAG);
             }
-            getSupportFragmentManager().addOnBackStackChangedListener(this);
         }else{
             mTabletView=false;
             if(savedInstanceState==null&&getSupportFragmentManager().getBackStackEntryCount()==0){
@@ -38,6 +47,7 @@ public class MainActivity extends AppCompatActivity implements FragmentManager.O
             }
             shouldDisplayHomeUp();
         }
+        getSupportFragmentManager().addOnBackStackChangedListener(this);
 
     }
 
@@ -70,6 +80,7 @@ public class MainActivity extends AppCompatActivity implements FragmentManager.O
                 ((SongFragment)f).show(getSupportFragmentManager(),tag);
             }else {
                 getSupportFragmentManager().beginTransaction().add(R.id.main_fragment_content, f, tag).addToBackStack(tag).commit();
+                shouldDisplayHomeUp();
             }
 
         }else{
@@ -83,7 +94,7 @@ public class MainActivity extends AppCompatActivity implements FragmentManager.O
     public void shouldDisplayHomeUp(){
         //Enable Up button only  if there are entries in the back stack
         boolean canback = getSupportFragmentManager().getBackStackEntryCount()>1;
-        if(!canback){
+        if (!canback) {
             getSupportActionBar().setTitle(getString(R.string.app_name));
             getSupportActionBar().setSubtitle("");
 
@@ -94,6 +105,11 @@ public class MainActivity extends AppCompatActivity implements FragmentManager.O
     @Override
     public void onBackStackChanged() {
         shouldDisplayHomeUp();
+        Fragment fmtoptrack=getSupportFragmentManager().findFragmentByTag(TopTracksFragment.TAG);
+        Fragment fmsong=getSupportFragmentManager().findFragmentByTag(SongFragment.TAG);
+        if(fmtoptrack!=null&&fmtoptrack.isAdded()&&fmsong==null){
+            ((TopTracksFragment)fmtoptrack).updateTitle();
+        }
     }
 
     @Override
@@ -105,7 +121,7 @@ public class MainActivity extends AppCompatActivity implements FragmentManager.O
 
     @Override
     public void onBackPressed() {
-        if(getSupportFragmentManager().getBackStackEntryCount()==1){
+        if(getSupportFragmentManager().getBackStackEntryCount()== 1){
             finish();
         }
         super.onBackPressed();
@@ -124,10 +140,42 @@ public class MainActivity extends AppCompatActivity implements FragmentManager.O
     }
 
     @Override
+    protected void onStart() {
+        super.onStart();
+        if(mServiceIntent!=null&&vPlayerServiceConnection!=null) {
+            bindService(mServiceIntent, vPlayerServiceConnection, Context.BIND_AUTO_CREATE);
+        }
+    }
+
+    @Override
     protected void onStop() {
         super.onStop();
         if(mPlayer!=null&&mPlayer.isPlaying()){
-//            mPlayer.showControllerInNotification();
+            mPlayer.showControllerInNotification();
         }
+    }
+    private ServiceConnection vPlayerServiceConnection = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+
+            PlayerService.LocalBinder binder=(PlayerService.LocalBinder) service;
+            mPlayer = binder.getService();
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+            mPlayer = null;
+        }
+    };
+
+    public boolean isTablet(){
+        return mTabletView;
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        mPlayer.killNotification();
+        mPlayer.stopSelf();
     }
 }

@@ -43,8 +43,6 @@ public class TopTracksFragment extends Fragment implements TopTracksResultAdapte
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        ((AppCompatActivity)getActivity()).getSupportActionBar().setTitle(getString(R.string.top_track_title));
-        ((AppCompatActivity)getActivity()).getSupportActionBar().setSubtitle(mArtist);
         View v= inflater.inflate(R.layout.top_track_fragment,container,false);
         mTopRecyclerView=(RecyclerView) v.findViewById(R.id.top_track_result_recyclerview);
         mTopRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
@@ -55,6 +53,21 @@ public class TopTracksFragment extends Fragment implements TopTracksResultAdapte
         return v;
     }
 
+    @Override
+    public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        if(((MainActivity)getActivity()).isTablet()){
+            ((MainActivity) getActivity()).getSupportActionBar().setTitle(getString(R.string.app_name));
+            ((AppCompatActivity)getActivity()).getSupportActionBar().setSubtitle(mArtist);
+        }else{
+            ((AppCompatActivity)getActivity()).getSupportActionBar().setTitle(getString(R.string.top_track_title));
+            ((AppCompatActivity)getActivity()).getSupportActionBar().setSubtitle(mArtist);
+
+        }
+        final InputMethodManager imm = (InputMethodManager) getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
+        imm.hideSoftInputFromWindow(getView().getWindowToken(), 0);
+    }
+
     public void setTracks(Tracks tracks){
         mTracks=tracks;
     }
@@ -63,6 +76,10 @@ public class TopTracksFragment extends Fragment implements TopTracksResultAdapte
     }
     public void setArtist(String artist){
         mArtist=artist;
+        if(getActivity()!=null&&((MainActivity)getActivity()).isTablet()){
+            ((MainActivity) getActivity()).getSupportActionBar().setTitle(getString(R.string.app_name));
+            ((AppCompatActivity)getActivity()).getSupportActionBar().setSubtitle(mArtist);
+        }
     }
 
    @Override
@@ -74,8 +91,7 @@ public class TopTracksFragment extends Fragment implements TopTracksResultAdapte
     }
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
-        final InputMethodManager imm = (InputMethodManager) getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
-        imm.hideSoftInputFromWindow(getView().getWindowToken(), 0);
+
         if (savedInstanceState != null) {
             TopTracksFragment ttf= (TopTracksFragment) getActivity().getSupportFragmentManager().getFragment(savedInstanceState,this.getClass().getName());
             mTracks=ttf.getTracks();
@@ -93,7 +109,18 @@ public class TopTracksFragment extends Fragment implements TopTracksResultAdapte
     @Override
     public void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
-        getActivity().getSupportFragmentManager().putFragment(outState,this.getClass().getName(),this);
+        getActivity().getSupportFragmentManager().putFragment(outState, this.getClass().getName(), this);
+    }
+
+    public void updateTitle(){
+        if(((MainActivity)getActivity()).isTablet()){
+            ((MainActivity) getActivity()).getSupportActionBar().setTitle(getString(R.string.app_name));
+            ((AppCompatActivity)getActivity()).getSupportActionBar().setSubtitle(mArtist);
+        }else{
+            ((AppCompatActivity)getActivity()).getSupportActionBar().setTitle(getString(R.string.top_track_title));
+            ((AppCompatActivity)getActivity()).getSupportActionBar().setSubtitle(mArtist);
+
+        }
     }
 
 }

@@ -17,6 +17,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -53,6 +54,7 @@ public class ArtistFragment extends Fragment implements SearchSpotifyCallback, A
     public static final String TAG="ArtistFragment";
     private int mCurrentPosition;
     private boolean mConfigurationChange=false;
+    private ProgressBar mSpinner;
 
 
     private Runnable mSearchRunnable=new Runnable() {
@@ -107,6 +109,7 @@ public class ArtistFragment extends Fragment implements SearchSpotifyCallback, A
         View v=LayoutInflater.from(getActivity()).inflate(R.layout.artist_fragment,container,false);
         mRecyclerView=(RecyclerView) v.findViewById(R.id.artist_result_recyclerview);
         mSearchBox=(EditText) v.findViewById(R.id.artist_result_search_box);
+        mSpinner=(ProgressBar) v.findViewById(R.id.artist_result_spinner);
         mSearchSpotifyDownload=new SearchSpotifyDownload();
         mRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
         if(savedInstanceState!=null){
@@ -130,6 +133,7 @@ public class ArtistFragment extends Fragment implements SearchSpotifyCallback, A
 
     private void searchArtist(){
         isSearching=true;
+        mSpinner.setVisibility(View.VISIBLE);
         mSearchSpotifyDownload.searchArtist(mSearchBox.getText().toString(),this);
 
     }
@@ -202,6 +206,7 @@ public class ArtistFragment extends Fragment implements SearchSpotifyCallback, A
                 ((TopTracksFragment)fg).updateList();
             }
         }
+        mSpinner.setVisibility(View.GONE);
     }
 
     @Override
@@ -214,6 +219,7 @@ public class ArtistFragment extends Fragment implements SearchSpotifyCallback, A
                 Toast.makeText(getActivity(), R.string.no_artist_found_message, Toast.LENGTH_LONG).show();
             }
         }
+        mSpinner.setVisibility(View.GONE);
     }
 
     @Override
