@@ -5,7 +5,6 @@ import android.os.AsyncTask;
 import com.udacity.nanodegree.spotifystreamer.interfaces.SearchSpotifyCallback;
 
 import java.util.HashMap;
-import java.util.Map;
 
 import kaaes.spotify.webapi.android.SpotifyApi;
 import kaaes.spotify.webapi.android.SpotifyService;

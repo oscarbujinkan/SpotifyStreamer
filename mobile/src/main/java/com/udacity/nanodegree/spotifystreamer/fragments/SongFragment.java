@@ -1,19 +1,14 @@
 package com.udacity.nanodegree.spotifystreamer.fragments;
 
 import android.content.Context;
-import android.content.Intent;
-import android.media.AudioManager;
-import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.annotation.Nullable;
 import android.support.v4.app.DialogFragment;
-import android.support.v4.app.Fragment;
 import android.support.v7.app.AppCompatActivity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.Window;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.ImageButton;
 import android.widget.ImageView;
@@ -31,7 +26,6 @@ import com.udacity.nanodegree.spotifystreamer.activities.MainActivity;
 import com.udacity.nanodegree.spotifystreamer.core.PlayerService;
 import com.udacity.nanodegree.spotifystreamer.utils.SpotifyUtils;
 
-import java.io.IOException;
 import java.util.ArrayList;
 
 import kaaes.spotify.webapi.android.models.Track;

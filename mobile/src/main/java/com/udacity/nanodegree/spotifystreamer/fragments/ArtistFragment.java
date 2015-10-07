@@ -28,8 +28,6 @@ import com.udacity.nanodegree.spotifystreamer.data.SearchSpotifyDownload;
 import com.udacity.nanodegree.spotifystreamer.interfaces.ArtistResultAdapterCallback;
 import com.udacity.nanodegree.spotifystreamer.interfaces.SearchSpotifyCallback;
 
-import java.io.Serializable;
-
 import kaaes.spotify.webapi.android.models.Artist;
 import kaaes.spotify.webapi.android.models.ArtistsPager;
 import kaaes.spotify.webapi.android.models.Tracks;
